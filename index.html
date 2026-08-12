@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MBTI 人格测试</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f4f5f9; margin: 0; padding: 0; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; background: #fff; min-height: 100vh; padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; }
+        .page { display: none; text-align: center; }
+        .page.active { display: block; }
+        h1 { color: #07c160; font-size: 24px; margin-bottom: 10px; }
+        p { font-size: 16px; color: #666; line-height: 1.6; margin-bottom: 30px; }
+        .btn { display: block; width: 100%; padding: 15px; margin-bottom: 15px; background-color: #f8f8f8; color: #333; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; cursor: pointer; transition: all 0.2s; text-align: left; }
+        .btn:active { background-color: #07c160; color: #fff; border-color: #07c160; }
+        .btn-start { background-color: #07c160; color: #fff; border: none; text-align: center; font-weight: bold; }
+        .progress { margin-bottom: 20px; font-size: 14px; color: #999; }
+        .result-title { font-size: 32px; color: #07c160; font-weight: bold; margin-bottom: 10px; }
+        .result-desc { text-align: left; background: #f9f9f9; padding: 15px; border-radius: 8px; font-size: 15px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- 欢迎页 -->
+    <div id="page-welcome" class="page active">
+        <h1>探索你的MBTI人格</h1>
+        <p>本测试包含20道精选题目，请根据你的第一直觉作答，不要过多思考“我应该怎样”，而是选择“我通常是怎样”。</p>
+        <button class="btn btn-start" onclick="startTest()">开始测试</button>
+    </div>
+
+    <!-- 答题页 -->
+    <div id="page-quiz" class="page">
+        <div class="progress" id="progress-text">1 / 20</div>
+        <h2 id="question-text" style="font-size: 18px; margin-bottom: 25px; text-align: left;">题目加载中...</h2>
+        <div id="options-container">
+            <!-- 选项通过JS动态生成 -->
+        </div>
+    </div>
+
+    <!-- 结果页 -->
+    <div id="page-result" class="page">
+        <p>你的MBTI人格类型是：</p>
+        <div class="result-title" id="result-type">INTJ</div>
+        <div class="result-desc" id="result-desc">结果描述加载中...</div>
+        <button class="btn btn-start" style="margin-top: 30px;" onclick="location.reload()">重新测试</button>
+    </div>
+</div>
+
+<script>
+    // 题库与量表 (可自行增删，确保每种维度题目数量均衡)
+    const questions = [
+        { text: "在社交聚会中，你通常倾向于：", options: [{text: "和许多人交流，包括陌生人", type: "E"}, {text: "只和少数认识的人深入交谈", type: "I"}] },
+        { text: "周末你更喜欢：", options: [{text: "出门参加活动或见朋友", type: "E"}, {text: "宅在家里看书、追剧或独处", type: "I"}] },
+        { text: "在表达想法时，你通常：", options: [{text: "边说边想，脱口而出", type: "E"}, {text: "先在心里想清楚再开口", type: "I"}] },
+        { text: "认识新朋友时，你通常：", options: [{text: "主动打招呼，很容易热络", type: "E"}, {text: "比较慢热，等别人先开口", type: "I"}] },
+        { text: "当你的手机响起时，你通常：", options: [{text: "立刻接听，喜欢语音沟通", type: "E"}, {text: "希望是文字消息，有时不想接", type: "I"}] },
+        
+        { text: "处理问题时，你更看重：", options: [{text: "实际情况和具体细节", type: "S"}, {text: "整体趋势和未来可能性", type: "N"}] },
+        { text: "你更喜欢怎样的文章或书籍？", options: [{text: "实用、基于事实和经验的", type: "S"}, {text: "富有想象力、探讨理论的", type: "N"}] },
+        { text: "学习新事物时，你习惯：", options: [{text: "一步一步按照说明书来", type: "S"}, {text: "先了解大意，自己摸索", type: "N"}] },
+        { text: "你更倾向于被哪种人吸引？", options: [{text: "脚踏实地，充满常识的人", type: "S"}, {text: "思维活跃，充满创意的人", type: "N"}] },
+        { text: "在描述一件事时，你通常：", options: [{text: "平铺直叙，交代具体细节", type: "S"}, {text: "使用比喻，侧重表达核心概念", type: "N"}] },
+
+        { text: "做决定时，你主要依赖：", options: [{text: "客观的逻辑和理性分析", type: "T"}, {text: "内心的价值观和他人的感受", type: "F"}] },
+        { text: "与人争论时，你更希望：", options: [{text: "分出对错，找到真理", type: "T"}, {text: "保持和谐，达成共识", type: "F"}] },
+        { text: "你认为最高的赞誉是：", options: [{text: "你是个极其聪明且有逻辑的人", type: "T"}, {text: "你是个极其温暖且富有同理心的人", type: "F"}] },
+        { text: "朋友遇到烦恼向你倾诉，你通常：", options: [{text: "帮TA分析原因并提供解决方案", type: "T"}, {text: "先安抚TA的情绪，给予情感支持", type: "F"}] },
+        { text: "在工作中，你更看重：", options: [{text: "公平与效率", type: "T"}, {text: "人情与团队氛围", type: "F"}] },
+
+        { text: "对于即将到来的旅行，你倾向于：", options: [{text: "提前做好详细的行程规划", type: "J"}, {text: "随遇而安，走到哪算哪", type: "P"}] },
+        { text: "面对工作截止日期，你通常：", options: [{text: "提前完成，避免最后时刻的慌乱", type: "J"}, {text: "在最后期限的压力下爆发出灵感", type: "P"}] },
+        { text: "你的桌面和生活环境通常是：", options: [{text: "井井有条，东西固定摆放", type: "J"}, {text: "有些凌乱，但自己能找到东西", type: "P"}] },
+        { text: "你更喜欢哪种生活方式？", options: [{text: "有计划、有规律、可控的", type: "J"}, {text: "灵活、随性、充满未知的", type: "P"}] },
+        { text: "遇到突发事件打乱计划，你会：", options: [{text: "感到焦虑，急于恢复原本的计划", type: "J"}, {text: "觉得无所谓，顺其自然调整", type: "P"}] }
+    ];
+
+    // 16型人格结果描述字典
+    const resultsDict = {
+        "INTJ": "【建筑师】富有想象力和战略性的思想家，一切皆在计划之中。",
+        "INTP": "【逻辑学家】具有创造力的发明家，对知识有着止不住的渴望。",
+        "ENTJ": "【指挥官】大胆、富有想象力且意志强大的领导者，总能找到或创造解决方法。",
+        "ENTP": "【辩论家】聪明好奇的思想者，不会放弃任何智力上的挑战。",
+        "INFJ": "【提倡者】安静而神秘，同时鼓舞人心且不知疲倦的理想主义者。",
+        "INFP": "【调停者】诗意、善良且利他的人，总是热情地为正当理由提供帮助。",
+        "ENFJ": "【主人公】富有魅力且鼓舞人心的领导者，有使听众着迷的能力。",
+        "ENFP": "【竞选者】热情、有创造力且爱交际的自由自在的人，总能找到微笑的理由。",
+        "ISTJ": "【物流师】实际且注重事实的个人，可靠性不容怀疑。",
+        "ISFJ": "【守卫者】非常专注且温暖的守护者，时刻准备着保护爱着的人们。",
+        "ESTJ": "【总经理】出色地管理事情或人的无与伦比的管理者。",
+        "ESFJ": "【执政官】极有同情心、爱交际受欢迎的人，总是热心提供帮助。",
+        "ISTP": "【鉴赏家】大胆而实际的实验家，擅长使用任何形式的工具。",
+        "ISFP": "【探险家】灵活有魅力的艺术家，时刻准备着探索和体验新鲜事物。",
+        "ESTP": "【企业家】聪明、精力充沛且非常注重感知的人，真正享受边缘生活。",
+        "ESFP": "【表演者】自发、精力充沛且热情的表演者，生活在他们周围永不无聊。"
+    };
+
+    let currentQ = 0;
+    let scores = { E: 0, I: 0, S: 0, N: 0, T: 0, F: 0, J: 0, P: 0 };
+
+    function showPage(pageId) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById(pageId).classList.add('active');
+    }
+
+    function startTest() {
+        currentQ = 0;
+        scores = { E: 0, I: 0, S: 0, N: 0, T: 0, F: 0, J: 0, P: 0 };
+        showPage('page-quiz');
+        renderQuestion();
+    }
+
+    function renderQuestion() {
+        if (currentQ >= questions.length) {
+            calculateResult();
+            return;
+        }
+        document.getElementById('progress-text').innerText = `${currentQ + 1} / ${questions.length}`;
+        document.getElementById('question-text').innerText = questions[currentQ].text;
+        
+        const container = document.getElementById('options-container');
+        container.innerHTML = '';
+        
+        questions[currentQ].options.forEach(opt => {
+            const btn = document.createElement('button');
+            btn.className = 'btn';
+            btn.innerText = opt.text;
+            btn.onclick = () => selectOption(opt.type);
+            container.appendChild(btn);
+        });
+    }
+
+    function selectOption(type) {
+        scores[type]++;
+        currentQ++;
+        // 添加一点延迟让用户看到点击效果
+        setTimeout(renderQuestion, 150);
+    }
+
+    function calculateResult() {
+        let type = "";
+        type += (scores.E >= scores.I) ? "E" : "I";
+        type += (scores.S >= scores.N) ? "S" : "N";
+        type += (scores.T >= scores.F) ? "T" : "F";
+        type += (scores.J >= scores.P) ? "J" : "P";
+
+        document.getElementById('result-type').innerText = type;
+        document.getElementById('result-desc').innerText = resultsDict[type] || "你是一个独特的人！";
+        showPage('page-result');
+    }
+</script>
+</body>
+</html>
