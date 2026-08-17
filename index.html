@@ -3,102 +3,186 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>MBTI 人格测试</title>
+    <title>我的隐藏人格大揭秘</title>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f4f5f9; margin: 0; padding: 0; color: #333; }
-        .container { max-width: 600px; margin: 0 auto; background: #fff; min-height: 100vh; padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; }
-        .page { display: none; text-align: center; }
-        .page.active { display: block; }
-        h1 { color: #07c160; font-size: 24px; margin-bottom: 10px; }
-        p { font-size: 16px; color: #666; line-height: 1.6; margin-bottom: 30px; }
-        .btn { display: block; width: 100%; padding: 15px; margin-bottom: 15px; background-color: #f8f8f8; color: #333; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; cursor: pointer; transition: all 0.2s; text-align: left; }
-        .btn:active { background-color: #07c160; color: #fff; border-color: #07c160; }
-        .btn-start { background-color: #07c160; color: #fff; border: none; text-align: center; font-weight: bold; }
-        .progress { margin-bottom: 20px; font-size: 14px; color: #999; }
-        .result-title { font-size: 32px; color: #07c160; font-weight: bold; margin-bottom: 10px; }
-        .result-desc { text-align: left; background: #f9f9f9; padding: 15px; border-radius: 8px; font-size: 15px; }
+        /* 引入好看的免费中文字体 */
+        :root {
+            --primary: #8a2be2; /* 活力紫 */
+            --primary-light: #f3e8ff;
+            --text-main: #2d3748;
+            --text-sub: #718096;
+            --bg-color: #f7fafc;
+            --card-bg: #ffffff;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { font-family: 'PingFang SC', 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: var(--bg-color); margin: 0; padding: 0; color: var(--text-main); line-height: 1.6; }
+        
+        .app-container { max-width: 500px; margin: 0 auto; min-height: 100vh; position: relative; overflow: hidden; display: flex; flex-direction: column; }
+        
+        /* 页面切换动画 */
+        .page { display: none; padding: 30px 20px; flex: 1; flex-direction: column; justify-content: center; animation: fadeIn 0.4s ease-out forwards; }
+        .page.active { display: flex; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* 欢迎页 */
+        .hero-icon { font-size: 70px; text-align: center; margin-bottom: 10px; animation: bounce 2s infinite; }
+        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        .title { text-align: center; font-size: 28px; font-weight: 800; color: var(--text-main); margin-bottom: 15px; }
+        .subtitle { text-align: center; color: var(--text-sub); font-size: 15px; margin-bottom: 40px; }
+        
+        /* 按钮样式 */
+        .btn-main { background: linear-gradient(135deg, #a855f7 0%, #8a2be2 100%); color: white; border: none; border-radius: 50px; padding: 18px; font-size: 18px; font-weight: bold; width: 100%; box-shadow: 0 10px 20px rgba(138, 43, 226, 0.3); cursor: pointer; transition: transform 0.2s; }
+        .btn-main:active { transform: scale(0.96); }
+
+        /* 答题页 */
+        .progress-bar { width: 100%; height: 6px; background: #e2e8f0; border-radius: 10px; margin-bottom: 30px; overflow: hidden; }
+        .progress-fill { height: 100%; background: var(--primary); width: 0%; transition: width 0.3s ease; }
+        .question-num { color: var(--primary); font-weight: bold; font-size: 14px; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
+        .question-text { font-size: 20px; font-weight: bold; margin-bottom: 30px; line-height: 1.5; }
+        
+        /* 选项卡片 */
+        .option-card { background: var(--card-bg); border: 2px solid #e2e8f0; border-radius: 16px; padding: 18px 20px; margin-bottom: 15px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; }
+        .option-card:active, .option-card.selected { border-color: var(--primary); background: var(--primary-light); transform: scale(0.98); }
+        .option-emoji { font-size: 24px; margin-right: 15px; flex-shrink: 0; }
+        .option-text { font-size: 16px; font-weight: 500; }
+
+        /* 加载页 */
+        .loader { border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin: 0 auto 20px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .loading-text { text-align: center; color: var(--text-sub); font-weight: bold; }
+
+        /* 结果页（海报质感） */
+        .result-card { background: var(--card-bg); border-radius: 20px; padding: 30px 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.08); text-align: center; position: relative; border-top: 8px solid var(--primary); margin-bottom: 20px; }
+        .result-type { font-size: 48px; font-weight: 900; color: var(--primary); margin: 10px 0 0 0; letter-spacing: 2px; }
+        .result-tag { display: inline-block; background: var(--primary-light); color: var(--primary); padding: 5px 15px; border-radius: 20px; font-size: 14px; font-weight: bold; margin-bottom: 15px; }
+        .result-desc { font-size: 15px; color: var(--text-sub); text-align: left; background: #f8fafc; padding: 15px; border-radius: 12px; line-height: 1.7; }
+        
+        /* 公众号引流区 */
+        .follow-box { margin-top: 20px; padding: 15px; border: 2px dashed #cbd5e0; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-direction: column; background: #fff; }
+        .qr-placeholder { width: 100px; height: 100px; background: #e2e8f0; border-radius: 8px; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; font-size: 12px; color: #a0aec0; }
+        .follow-text { font-size: 13px; color: var(--text-sub); font-weight: bold; }
+        
+        .tip-text { text-align: center; font-size: 12px; color: #a0aec0; margin-top: 15px; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <!-- 欢迎页 -->
+<div class="app-container">
+    
+    <!-- 1. 欢迎页 -->
     <div id="page-welcome" class="page active">
-        <h1>探索你的MBTI人格</h1>
-        <p>本测试包含20道精选题目，请根据你的第一直觉作答，不要过多思考“我应该怎样”，而是选择“我通常是怎样”。</p>
-        <button class="btn btn-start" onclick="startTest()">开始测试</button>
+        <div class="hero-icon">🔮</div>
+        <h1 class="title">测测你的隐藏人格</h1>
+        <p class="subtitle">全面精简版 28 题精算！<br>抛弃无聊的官方题库，只看你在真实生活中的「本能反应」。<br>耗时约 3-4 分钟，准备好被看穿了吗？</p>
+        <button class="btn-main" onclick="startTest()">开始揭秘 🚀</button>
     </div>
 
-    <!-- 答题页 -->
+    <!-- 2. 答题页 -->
     <div id="page-quiz" class="page">
-        <div class="progress" id="progress-text">1 / 20</div>
-        <h2 id="question-text" style="font-size: 18px; margin-bottom: 25px; text-align: left;">题目加载中...</h2>
-        <div id="options-container">
-            <!-- 选项通过JS动态生成 -->
+        <div class="progress-bar">
+            <div class="progress-fill" id="progress-fill"></div>
+        </div>
+        <div class="question-num" id="question-num">Question 1/28</div>
+        <div class="question-text" id="question-text">题目加载中...</div>
+        
+        <div id="options-area">
+            <!-- 选项卡片动态生成 -->
         </div>
     </div>
 
-    <!-- 结果页 -->
-    <div id="page-result" class="page">
-        <p>你的MBTI人格类型是：</p>
-        <div class="result-title" id="result-type">INTJ</div>
-        <div class="result-desc" id="result-desc">结果描述加载中...</div>
-        <button class="btn btn-start" style="margin-top: 30px;" onclick="location.reload()">重新测试</button>
+    <!-- 3. 过渡计算页 -->
+    <div id="page-loading" class="page">
+        <div class="loader"></div>
+        <div class="loading-text" id="loading-text">正在扫描你的脑电波...</div>
     </div>
+
+    <!-- 4. 结果页 (截图海报卡片) -->
+    <div id="page-result" class="page">
+        <div class="result-card">
+            <div style="font-size: 50px;" id="result-emoji">👑</div>
+            <div class="result-type" id="result-type">INTJ</div>
+            <div class="result-tag" id="result-tag">冷酷的计划通</div>
+            <div class="result-desc" id="result-desc">结果描述加载中...</div>
+            
+            <!-- 🚨 引流核心区：在此处替换二维码 🚨 -->
+            <div class="follow-box">
+                <!-- 替换图片src即可：<img src="你的二维码链接" style="width:100px; height:100px; border-radius:8px; margin-bottom:10px;"> -->
+                <div class="qr-placeholder">公众号二维码</div>
+                <div class="follow-text">长按保存截图 或 扫码关注获取深度解析</div>
+            </div>
+        </div>
+        
+        <button class="btn-main" style="background: #e2e8f0; color: #4a5568; box-shadow: none;" onclick="location.reload()">再测一次</button>
+        <div class="tip-text">觉得准的话，把右上角链接分享给朋友吧！</div>
+    </div>
+
 </div>
 
 <script>
-    // 题库与量表 (可自行增删，确保每种维度题目数量均衡)
+    // 【28题扩充版题库】网感拉满的生活场景
     const questions = [
-        { text: "在社交聚会中，你通常倾向于：", options: [{text: "和许多人交流，包括陌生人", type: "E"}, {text: "只和少数认识的人深入交谈", type: "I"}] },
-        { text: "周末你更喜欢：", options: [{text: "出门参加活动或见朋友", type: "E"}, {text: "宅在家里看书、追剧或独处", type: "I"}] },
-        { text: "在表达想法时，你通常：", options: [{text: "边说边想，脱口而出", type: "E"}, {text: "先在心里想清楚再开口", type: "I"}] },
-        { text: "认识新朋友时，你通常：", options: [{text: "主动打招呼，很容易热络", type: "E"}, {text: "比较慢热，等别人先开口", type: "I"}] },
-        { text: "当你的手机响起时，你通常：", options: [{text: "立刻接听，喜欢语音沟通", type: "E"}, {text: "希望是文字消息，有时不想接", type: "I"}] },
-        
-        { text: "处理问题时，你更看重：", options: [{text: "实际情况和具体细节", type: "S"}, {text: "整体趋势和未来可能性", type: "N"}] },
-        { text: "你更喜欢怎样的文章或书籍？", options: [{text: "实用、基于事实和经验的", type: "S"}, {text: "富有想象力、探讨理论的", type: "N"}] },
-        { text: "学习新事物时，你习惯：", options: [{text: "一步一步按照说明书来", type: "S"}, {text: "先了解大意，自己摸索", type: "N"}] },
-        { text: "你更倾向于被哪种人吸引？", options: [{text: "脚踏实地，充满常识的人", type: "S"}, {text: "思维活跃，充满创意的人", type: "N"}] },
-        { text: "在描述一件事时，你通常：", options: [{text: "平铺直叙，交代具体细节", type: "S"}, {text: "使用比喻，侧重表达核心概念", type: "N"}] },
+        // E (外倾) vs I (内倾) - 7题
+        { text: "周五晚上，朋友叫你去一个有很多陌生人的大聚会，你的第一反应是：", options: [{emoji: "🎉", text: "太好了！又可以认识新朋友了", type: "E"}, {emoji: "🛌", text: "内心抗拒，只想找个借口在家躺平", type: "I"}] },
+        { text: "在公司/学校的电梯里，遇到不是很熟的同事/同学：", options: [{emoji: "🗣️", text: "主动找话题，聊聊八卦或天气", type: "E"}, {emoji: "📱", text: "立刻掏出手机装作很忙，避免对视", type: "I"}] },
+        { text: "休息日你在家待了一整天，到了晚上你会觉得：", options: [{emoji: "🏃", text: "憋得慌，必须找人说说话或出去走走", type: "E"}, {emoji: "🔋", text: "太爽了，满血复活，希望明天继续", type: "I"}] },
+        { text: "微信群里突然抛出一个大瓜，你会：", options: [{emoji: "⌨️", text: "迅速加入群聊，疯狂输出表情包和观点", type: "E"}, {emoji: "🍿", text: "默默爬楼吃瓜，内心毫无波澜甚至想笑", type: "I"}] },
+        { text: "去一家新开的网红餐厅吃饭，如果服务员拉着你热情互动：", options: [{emoji: "🤪", text: "顺势跟他开玩笑，社牛附体", type: "E"}, {emoji: "🥶", text: "尴尬得脚趾抠地，只求他快点端菜走人", type: "I"}] },
+        { text: "开心或难过的时候，你通常怎么排解情绪？", options: [{emoji: "🍻", text: "找人疯狂倾诉，或者拉人出去大吃一顿", type: "E"}, {emoji: "🎧", text: "一个人听歌、发呆、自我消化", type: "I"}] },
+        { text: "你的手机常年状态是：", options: [{emoji: "🔔", text: "开着铃声或震动，怕错过消息或电话", type: "E"}, {emoji: "s🔇", text: "万年静音，看到消息随缘回复", type: "I"}] },
 
-        { text: "做决定时，你主要依赖：", options: [{text: "客观的逻辑和理性分析", type: "T"}, {text: "内心的价值观和他人的感受", type: "F"}] },
-        { text: "与人争论时，你更希望：", options: [{text: "分出对错，找到真理", type: "T"}, {text: "保持和谐，达成共识", type: "F"}] },
-        { text: "你认为最高的赞誉是：", options: [{text: "你是个极其聪明且有逻辑的人", type: "T"}, {text: "你是个极其温暖且富有同理心的人", type: "F"}] },
-        { text: "朋友遇到烦恼向你倾诉，你通常：", options: [{text: "帮TA分析原因并提供解决方案", type: "T"}, {text: "先安抚TA的情绪，给予情感支持", type: "F"}] },
-        { text: "在工作中，你更看重：", options: [{text: "公平与效率", type: "T"}, {text: "人情与团队氛围", type: "F"}] },
+        // S (感觉) vs N (直觉) - 7题
+        { text: "刷短视频或者看剧的时候，你更喜欢：", options: [{emoji: "👀", text: "贴近现实、有生活细节、接地气的", type: "S"}, {emoji: "🌌", text: "脑洞大开、充满悬念或奇幻设定的", type: "N"}] },
+        { text: "如果让你组装一件宜家家具，你会：", options: [{emoji: "📖", text: "老老实实翻开说明书，一步一步来", type: "S"}, {emoji: "🛠️", text: "看一眼成品图，靠直觉直接上手拼", type: "N"}] },
+        { text: "听到一个震惊的八卦，你的第一关注点在于：", options: [{emoji: "🕵️", text: "谁？在哪？到底发生了什么具体的事？", type: "S"}, {emoji: "🤔", text: "这事背后的隐情是什么？会有什么影响？", type: "N"}] },
+        { text: "别人跟你描述一个新事物，你怎么最容易理解？", options: [{emoji: "📏", text: "“这东西多大？什么材质？多少钱？”", type: "S"}, {emoji: "🛸", text: "“这东西就像个外星人的飞船一样……”", type: "N"}] },
+        { text: "旅游的时候看到绝美风景，你脑子里第一反应是：", options: [{emoji: "📸", text: "“这水真清这山真高，赶紧拍照打卡！”", type: "S"}, {emoji: "✨", text: "“哇，这让我感受到了宇宙的浩瀚和人类的渺小”", type: "N"}] },
+        { text: "你平时做白日梦的内容通常是：", options: [{emoji: "🍔", text: "晚上吃什么、明天穿什么、工资怎么花", type: "S"}, {emoji: "🧟", text: "丧尸爆发我该怎么跑、外星人来了怎么办", type: "N"}] },
+        { text: "听到一句非常抽象的歌词或诗句，你会：", options: [{emoji: "🤨", text: "只看字面意思，有时觉得“这不符合常理啊”", type: "S"}, {emoji: "🎭", text: "立刻脑补出画面，甚至过度解读出深层含义", type: "N"}] },
 
-        { text: "对于即将到来的旅行，你倾向于：", options: [{text: "提前做好详细的行程规划", type: "J"}, {text: "随遇而安，走到哪算哪", type: "P"}] },
-        { text: "面对工作截止日期，你通常：", options: [{text: "提前完成，避免最后时刻的慌乱", type: "J"}, {text: "在最后期限的压力下爆发出灵感", type: "P"}] },
-        { text: "你的桌面和生活环境通常是：", options: [{text: "井井有条，东西固定摆放", type: "J"}, {text: "有些凌乱，但自己能找到东西", type: "P"}] },
-        { text: "你更喜欢哪种生活方式？", options: [{text: "有计划、有规律、可控的", type: "J"}, {text: "灵活、随性、充满未知的", type: "P"}] },
-        { text: "遇到突发事件打乱计划，你会：", options: [{text: "感到焦虑，急于恢复原本的计划", type: "J"}, {text: "觉得无所谓，顺其自然调整", type: "P"}] }
+        // T (思考) vs F (情感) - 7题
+        { text: "朋友跟你吐槽他遇到个奇葩老板，你会：", options: [{emoji: "💡", text: "帮他理性分析情况，建议他如何应对或辞职", type: "T"}, {emoji: "🤬", text: "不管三七二十一，先跟他一起骂老板", type: "F"}] },
+        { text: "如果你点外卖被少送了一份配菜，你的反应：", options: [{emoji: "⚖️", text: "按规矩申请退款，一码归一码", type: "T"}, {emoji: "🥺", text: "看骑手大热天也不容易，算了吧", type: "F"}] },
+        { text: "看电影/小说遇到主角做蠢事导致悲剧，你的反应：", options: [{emoji: "🤦", text: "“这逻辑不通啊，这时候明明该XX，活该！”", type: "T"}, {emoji: "😭", text: "“太心疼了，他一定是有苦衷的，呜呜呜”", type: "F"}] },
+        { text: "朋友找你借钱，但你觉得他可能还不上，你会：", options: [{emoji: "🛑", text: "直接或委婉拒绝，或者要求必须写借条", type: "T"}, {emoji: "💸", text: "觉得不借太伤感情，硬着头皮借出去一些", type: "F"}] },
+        { text: "在团队合作中，如果有人严重拖后腿，你会：", options: [{emoji: "🔪", text: "就事论事指出他的问题，必要时直接换人", type: "T"}, {emoji: "🩹", text: "照顾他的自尊心，委婉提醒或干脆自己帮他做完", type: "F"}] },
+        { text: "你觉得别人夸你哪句话，更让你开心？", options: [{emoji: "🧠", text: "“你这也太聪明、太有逻辑了吧！”", type: "T"}, {emoji: "❤️", text: "“你真的很懂我，跟你相处真舒服！”", type: "F"}] },
+        { text: "如果让你评价自己，你觉得你更是个：", options: [{emoji: "🧊", text: "讲道理、重公平的“冷血杀手”", type: "T"}, {emoji: "👼", text: "重感情、容易心软的“活菩萨”", type: "F"}] },
+
+        // J (判断) vs P (感知) - 7题
+        { text: "马上要出去旅游了，你的状态是：", options: [{emoji: "📊", text: "酒店机票已定好，甚至做好了Excel攻略", type: "J"}, {emoji: "🎒", text: "大致定个目的地，走到哪算哪，主打随性", type: "P"}] },
+        { text: "你的手机桌面/电脑桌面通常是：", options: [{emoji: "📁", text: "分门别类，强迫症般的整齐", type: "J"}, {emoji: "🌪️", text: "各种APP和文件乱放，但自己总能找到", type: "P"}] },
+        { text: "遇到 DDL（截止日期）时，你通常的操作是：", options: [{emoji: "✅", text: "提前几天就弄完，坚决不熬夜赶工", type: "J"}, {emoji: "🔥", text: "不到最后一天没有灵感，极限操作疯狂赶工", type: "P"}] },
+        { text: "你平时的购物习惯是：", options: [{emoji: "🛒", text: "列好清单，直奔目标买完就走", type: "J"}, {emoji: "🛍️", text: "随便逛逛，经常买回一堆计划外的破烂", type: "P"}] },
+        { text: "突然被朋友叫出去玩，你更喜欢哪种邀约？", options: [{emoji: "📅", text: "“下周六下午2点，剧本杀不见不散”", type: "J"}, {emoji: "🍺", text: "“今晚干嘛？走，马上跟我下楼吃烧烤！”", type: "P"}] },
+        { text: "如果突发事件打乱了你原本完美的计划，你会：", options: [{emoji: "💢", text: "感到烦躁和焦虑，觉得一切都失控了", type: "J"}, {emoji: "🤷", text: "觉得无所谓，“那就顺其自然换个玩法呗”", type: "P"}] },
+        { text: "到了周末，你更倾向于：", options: [{emoji: "🎯", text: "按照心里的计划把想做的事情一一完成", type: "J"}, {emoji: "🛋️", text: "完全看心情，突然想干嘛就干嘛", type: "P"}] }
     ];
 
-    // 16型人格结果描述字典
-    const resultsDict = {
-        "INTJ": "【建筑师】富有想象力和战略性的思想家，一切皆在计划之中。",
-        "INTP": "【逻辑学家】具有创造力的发明家，对知识有着止不住的渴望。",
-        "ENTJ": "【指挥官】大胆、富有想象力且意志强大的领导者，总能找到或创造解决方法。",
-        "ENTP": "【辩论家】聪明好奇的思想者，不会放弃任何智力上的挑战。",
-        "INFJ": "【提倡者】安静而神秘，同时鼓舞人心且不知疲倦的理想主义者。",
-        "INFP": "【调停者】诗意、善良且利他的人，总是热情地为正当理由提供帮助。",
-        "ENFJ": "【主人公】富有魅力且鼓舞人心的领导者，有使听众着迷的能力。",
-        "ENFP": "【竞选者】热情、有创造力且爱交际的自由自在的人，总能找到微笑的理由。",
-        "ISTJ": "【物流师】实际且注重事实的个人，可靠性不容怀疑。",
-        "ISFJ": "【守卫者】非常专注且温暖的守护者，时刻准备着保护爱着的人们。",
-        "ESTJ": "【总经理】出色地管理事情或人的无与伦比的管理者。",
-        "ESFJ": "【执政官】极有同情心、爱交际受欢迎的人，总是热心提供帮助。",
-        "ISTP": "【鉴赏家】大胆而实际的实验家，擅长使用任何形式的工具。",
-        "ISFP": "【探险家】灵活有魅力的艺术家，时刻准备着探索和体验新鲜事物。",
-        "ESTP": "【企业家】聪明、精力充沛且非常注重感知的人，真正享受边缘生活。",
-        "ESFP": "【表演者】自发、精力充沛且热情的表演者，生活在他们周围永不无聊。"
+    // 【幽默/扎心版 16型人格描述】
+    const resultsData = {
+        "INTJ": { emoji: "♟️", tag: "冷酷的计划通", desc: "表面波澜不惊，脑子里已经演练了100种毁灭世界的方案。智商常年占领高地，但谈恋爱时可能像个AI。讨厌蠢人，如果他对你耐心，说明你对他很重要。" },
+        "INTP": { emoji: "🦉", tag: "神游太虚的哲学家", desc: "互联网重度用户，拖延症晚期。脑袋里装满了宇宙奥秘，但可能连出门穿什么袜子都要想半天。能在极度理性和极度摆烂中反复横跳。" },
+        "ENTJ": { emoji: "🦁", tag: "无情的搞钱/催进度机器", desc: "天生的霸道总裁，执行力爆表。「我不听过程，我只要结果」。如果你拖累了他的进度，他会用眼神把你秒杀。搞事业第一名。" },
+        "ENTP": { emoji: "🤡", tag: "杠精本精 / 点子大王", desc: "行走的十万个为什么，只要你想吵架，他能陪你辩论到天明。三分钟热度，开坑无数填坑为零。极其聪明，但通常不用在正途上。" },
+        "INFJ": { emoji: "🔮", tag: "看透一切的老灵魂", desc: "人类观察家，共情能力极强，但极度注重边界感。表面温柔顺从，内心有个极高的门槛，一旦你越界，就会被无情“一键拉黑”。" },
+        "INFP": { emoji: "🦋", tag: "悲叹的内耗小天才", desc: "白天搞笑女/男，深夜emo神。对这个世界充满滤镜，常常因为别人的一句话在心里演完一部琼瑶剧。内心戏极其丰富，是个惹人疼爱的小天使。" },
+        "ENFJ": { emoji: "🌞", tag: "发光发热的小太阳", desc: "天生的金牌导师和政委，热衷于拯救世界和身边的朋友。共情能力max，极度在乎别人的感受，有时甚至会为了照顾别人而委屈自己。" },
+        "ENFP": { emoji: "🐶", tag: "快乐小狗 / 气氛组长", desc: "谁能拒绝一只热情的ENFP快乐小狗呢？脑洞极大，社交悍匪，跟谁都能聊上两句。但是夜深人静时，也会突然变成一只抑郁的修勾。" },
+        "ISTJ": { emoji: "📋", tag: "靠谱的六边形战士", desc: "人类社会运转的基石。极度自律、讲规矩、重承诺。「交给我，你放心」。如果世界末日来了，他绝对是那个带着压缩饼干和说明书生存到最后的人。" },
+        "ISFJ": { emoji: "🛡️", tag: "爹系/妈系守护天使", desc: "温婉贤淑，记忆力惊人，记得朋友的生日和忌口。默默付出不求回报，老好人本好。但如果触碰到底线，爆发起来会让你怀疑人生。" },
+        "ESTJ": { emoji: "🔨", tag: "严厉的教导主任", desc: "极度务实，眼里揉不得沙子。最受不了墨迹和矫情。「哭有什么用？把问题解决了再哭」。团队里的主心骨，虽然有时候说话有点扎心。" },
+        "ESFJ": { emoji: "🎉", tag: "八面玲珑的社交达人", desc: "热心肠的大哥/大姐大，居委会荣誉主任。极度渴望和谐，最怕场面冷下来。如果聚会上有人被冷落，他一定会第一个上去搭话。" },
+        "ISTP": { emoji: "🐺", tag: "人狠话不多的独行侠", desc: "天生的修理工或刺客。平时看着像在发呆，遇到危机时却能冷静掏出工具解决问题。不喜欢废话，信奉「能动手就别吵吵」。" },
+        "ISFP": { emoji: "🎨", tag: "随遇而安的艺术家", desc: "人间咸鱼，极致的颜控。对内卷毫无兴趣，只想舒舒服服地过好自己的小日子。情绪感知力极强，可能上一秒还在笑，下一秒就emo了。" },
+        "ESTP": { emoji: "⚡", tag: "极限运动爱好者", desc: "活在当下的及时行乐主义者。胆子大、反应快，喜欢刺激和冒险。比起看说明书，更喜欢直接上手试。是个极其有魅力的浪子/大玩家。" },
+        "ESFP": { emoji: "✨", tag: "闪闪发光的舞台C位", desc: "天生的开心果，人群中最靓的仔/女。有他们在的地方绝不缺笑声。热衷于享受美食、美景和一切新鲜事物，今朝有酒今朝醉。" }
     };
 
     let currentQ = 0;
     let scores = { E: 0, I: 0, S: 0, N: 0, T: 0, F: 0, J: 0, P: 0 };
 
-    function showPage(pageId) {
+    function switchPage(pageId) {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         document.getElementById(pageId).classList.add('active');
     }
@@ -106,47 +190,90 @@
     function startTest() {
         currentQ = 0;
         scores = { E: 0, I: 0, S: 0, N: 0, T: 0, F: 0, J: 0, P: 0 };
-        showPage('page-quiz');
+        switchPage('page-quiz');
         renderQuestion();
     }
 
     function renderQuestion() {
         if (currentQ >= questions.length) {
-            calculateResult();
+            startLoading();
             return;
         }
-        document.getElementById('progress-text').innerText = `${currentQ + 1} / ${questions.length}`;
-        document.getElementById('question-text').innerText = questions[currentQ].text;
         
-        const container = document.getElementById('options-container');
-        container.innerHTML = '';
+        // 更新进度条和题号
+        const progress = ((currentQ) / questions.length) * 100;
+        document.getElementById('progress-fill').style.width = progress + '%';
+        document.getElementById('question-num').innerText = `Question ${currentQ + 1} / ${questions.length}`;
         
-        questions[currentQ].options.forEach(opt => {
-            const btn = document.createElement('button');
-            btn.className = 'btn';
-            btn.innerText = opt.text;
-            btn.onclick = () => selectOption(opt.type);
-            container.appendChild(btn);
+        // 更新题目
+        const qData = questions[currentQ];
+        document.getElementById('question-text').innerText = qData.text;
+        
+        // 渲染选项 (带动画)
+        const area = document.getElementById('options-area');
+        area.innerHTML = '';
+        
+        qData.options.forEach((opt, index) => {
+            const div = document.createElement('div');
+            div.className = 'option-card';
+            // 添加延迟入场动画
+            div.style.animation = `fadeIn 0.3s ease-out ${index * 0.1}s forwards`;
+            div.style.opacity = '0'; 
+            
+            div.innerHTML = `<span class="option-emoji">${opt.emoji}</span><span class="option-text">${opt.text}</span>`;
+            
+            div.onclick = function() {
+                // 防止连击
+                document.querySelectorAll('.option-card').forEach(c => c.style.pointerEvents = 'none');
+                this.classList.add('selected');
+                
+                scores[opt.type]++;
+                currentQ++;
+                // 延迟 400ms 切换下一题
+                setTimeout(renderQuestion, 400);
+            };
+            area.appendChild(div);
         });
     }
 
-    function selectOption(type) {
-        scores[type]++;
-        currentQ++;
-        // 添加一点延迟让用户看到点击效果
-        setTimeout(renderQuestion, 150);
+    function startLoading() {
+        switchPage('page-loading');
+        
+        // 假装在测算，增加神秘感和期待值
+        const texts = ["正在扫描脑电波...", "正在提取潜意识数据...", "正在匹配 16 型人格数据库...", "即将生成专属测算报告..."];
+        let i = 0;
+        const interval = setInterval(() => {
+            i++;
+            if (i < texts.length) {
+                document.getElementById('loading-text').innerText = texts[i];
+            }
+        }, 800);
+
+        setTimeout(() => {
+            clearInterval(interval);
+            showResult();
+        }, 3200); // 3.2秒后显示结果
     }
 
-    function calculateResult() {
+    function showResult() {
+        // 计算MBTI
         let type = "";
-        type += (scores.E >= scores.I) ? "E" : "I";
-        type += (scores.S >= scores.N) ? "S" : "N";
-        type += (scores.T >= scores.F) ? "T" : "F";
-        type += (scores.J >= scores.P) ? "J" : "P";
+        type += (scores.E > scores.I) ? "E" : "I";
+        type += (scores.S > scores.N) ? "S" : "N";
+        type += (scores.T > scores.F) ? "T" : "F";
+        type += (scores.J > scores.P) ? "J" : "P";
 
+        const res = resultsData[type] || resultsData["INFP"]; // 兜底
+
+        document.getElementById('result-emoji').innerText = res.emoji;
         document.getElementById('result-type').innerText = type;
-        document.getElementById('result-desc').innerText = resultsDict[type] || "你是一个独特的人！";
-        showPage('page-result');
+        document.getElementById('result-tag').innerText = res.tag;
+        document.getElementById('result-desc').innerText = res.desc;
+        
+        // 进度条填满
+        document.getElementById('progress-fill').style.width = '100%';
+
+        switchPage('page-result');
     }
 </script>
 </body>
